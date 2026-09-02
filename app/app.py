@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 DB_HOST = os.getenv("DB_HOST", "db")
 DB_USER = os.getenv("DB_USER", "app_user")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "app_password_safe")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "secret_env_pass")
 DB_NAME = os.getenv("DB_NAME", "app_db")
 
 def get_db_connection():

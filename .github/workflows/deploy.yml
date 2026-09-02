@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-
 jobs:
   security_and_tests:
     name: Análisis DevSecOps y Pruebas Unitarias
