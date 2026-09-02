@@ -25,7 +25,7 @@ def health_check():
 @app.route("/db-check", methods=["GET"])
 def db_check():
     try:
-        conn = get_db_connection()
+        conn =  get_db_connection()
         with conn.cursor() as cursor:
             cursor.execute("SELECT 1;")
             result = cursor.fetchone()

@@ -1,0 +1,64 @@
+name: CI/CD DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ main, 'feature/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security_and_tests:
+    name: Análisis DevSecOps y Pruebas Unitarias
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias y Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt bandit
+
+      - name: Escaneo SAST del código con Bandit
+        run: |
+          bandit -r app/ -ll -iii
+
+      - name: Ejecutar pruebas unitarias con Pytest
+        run: |
+          pytest app/test_app.py
+
+      - name: Construir imagen Docker local
+        run: |
+          docker build -t app-local:test .
+
+      - name: Escaneo de Vulnerabilidades con Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'app-local:test'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+  deploy:
+    name: Despliegue en Producción
+    needs: security_and_tests
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Despliegue SSH a EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/devsecops-sre
+            git pull origin main
+            docker compose up -d --build
