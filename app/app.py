@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 DB_HOST = os.getenv("DB_HOST", "db")
 DB_USER = os.getenv("DB_USER", "app_user")
-DB_PASSWORD = "Password_Insegura_12345!"
+DB_PASSWORD = os.getenv("DB_PASSWORD", "secret_env_pass")
 DB_NAME = os.getenv("DB_NAME", "app_db")
 
 def get_db_connection():
@@ -25,7 +25,7 @@ def health_check():
 @app.route("/db-check", methods=["GET"])
 def db_check():
     try:
-        conn =  get_db_connection()
+        conn = get_db_connection()
         with conn.cursor() as cursor:
             cursor.execute("SELECT 1;")
             result = cursor.fetchone()
