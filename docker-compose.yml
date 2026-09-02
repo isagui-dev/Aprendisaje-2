@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    container_name: flask-api
+    restart: always
+    environment:
+      - DB_HOST=db
+      - DB_USER=${DB_USER:-app_user}
+      - DB_PASSWORD=${DB_PASSWORD:-app_password_safe}
+      - DB_NAME=${DB_NAME:-app_db}
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-net
+
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_safe}
+      MYSQL_DATABASE: ${DB_NAME:-app_db}
+      MYSQL_USER: ${DB_USER:-app_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-app_password_safe}
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-net
+
+  npm:
+    image: "jc21/nginx-proxy-manager:latest"
+    container_name: npm
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    volumes:
+      - ./npm_data:/data
+      - ./npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - app-net
+
+volumes:
+  mysql_data:
+
+networks:
+  app-net:
+    driver: bridge
